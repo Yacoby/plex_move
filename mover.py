@@ -70,8 +70,8 @@ class FileEventMover(FileSystemEventHandler):
         return os.path.join(tld, sld, name)
 
     def _movie_path_suffix(self, path, guess):
-        name, container = guess['name'], guess['container']
-        return '%s.%s' % (name, container)
+        title, container = guess['title'], guess['container']
+        return '%s.%s' % (title, container)
 
 
 if __name__ == "__main__":
