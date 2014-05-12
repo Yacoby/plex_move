@@ -19,16 +19,23 @@ PATHS = {
 
 class FileEventMover(FileSystemEventHandler):
     def on_created(self, evt):
-        print 'create'
         if not any(evt.src_path.endswith(ext) for ext in VALID_EXT):
-            print 'nope'
             return
-        return self._move(evt.src_path)
+
+        try:
+	    return self._move(evt.src_path)
+	except Exception as e:
+            print repr(e)
+            raise
 
     def on_moved(self, evt):
         if not any(evt.dest_path.endswith(ext) for ext in VALID_EXT):
             return
-        return self._move(evt.dest_path)
+	try:
+            return self._move(evt.dest_path)
+	except Exception as e:
+            print repr(e)
+            raise
 
     def _move(self, path):
         dst = self._get_move_path(path)
@@ -47,24 +54,22 @@ class FileEventMover(FileSystemEventHandler):
     def _get_move_path(self, path):
         guess = guess_file_info(path, info = ['filename'])
         t = guess['type']
-        return os.path.join(PATHS[t], self._path_suffix(guess))
+        return os.path.join(PATHS[t], self._path_suffix(path, guess))
 
-    def _path_suffix(self, guess):
+    def _path_suffix(self, path, guess):
         t = guess['type']
         return {
             'movie':self._movie_path_suffix,
             'episode':self._episode_path_suffix,
-        }[t](guess)
+        }[t](path, guess)
 
-    def _episode_path_suffix(self, guess):
-        title, container = guess['title'], guess['container']
-        season, episode = guess['season'], guess['episodeNumber']
-        name = '%s S%dE%d.%s' % (title, season, episode, container)
+    def _episode_path_suffix(self, path, guess):
+        name = os.path.basename(path)
         tld = guess['series']
         sld = 'Season %s ' % guess['season']
         return os.path.join(tld, sld, name)
 
-    def _movie_path_suffix(self, guess):
+    def _movie_path_suffix(self, path, guess):
         name, container = guess['name'], guess['container']
         return '%s.%s' % (name, container)
 
@@ -74,6 +79,7 @@ if __name__ == "__main__":
         path = sys.argv[1]
     except IndexError:
         path = ''
+    path = os.path.abspath(path)
 
     event_handler = FileEventMover()
     observer = Observer()
