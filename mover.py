@@ -30,12 +30,17 @@ def _move(path):
       raise
 
   if not os.path.exists(dst):
+    print 'Moving to %s' % dst
     shutil.copyfile(path, dst)
+  else:
+    print 'File exists at %s' % dst
+
 
 def _get_move_path(path):
   guess = guess_file_info(path, info = ['filename'])
   t = guess['type']
   return os.path.join(PATHS[t], _path_suffix(path, guess))
+
 
 def _path_suffix(path, guess):
   t = guess['type']
@@ -44,15 +49,18 @@ def _path_suffix(path, guess):
     'episode':_episode_path_suffix,
   }[t](path, guess)
 
+
 def _episode_path_suffix(path, guess):
   name = os.path.basename(path)
   tld = guess['series']
-  sld = 'Season %s ' % guess['season']
+  sld = 'Season %s' % guess['season']
   return os.path.join(tld, sld, name)
+
 
 def _movie_path_suffix(path, guess):
   title, container = guess['title'], guess['container']
   return '%s.%s' % (title, container)
+
 
 class FileEventMover(FileSystemEventHandler):
   def on_created(self, evt):
